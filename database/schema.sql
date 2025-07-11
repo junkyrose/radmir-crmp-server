@@ -17,16 +17,16 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8 */;
 
 --
--- База данных: `a_orp`
+-- База данных: `schema`
 --
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `accountss`
+-- Структура таблицы `accounts`
 --
 
-CREATE TABLE IF NOT EXISTS `accountss` (
+CREATE TABLE IF NOT EXISTS `accounts` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(21) NOT NULL,
   `password` varchar(16) NOT NULL,
@@ -115,6 +115,22 @@ CREATE TABLE IF NOT EXISTS `bank_accounts_log` (
   `description` varchar(64) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `ban_list`
+--
+
+CREATE TABLE `ban_list` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `time` int(11) NOT NULL,
+  `ban_time` int(11) NOT NULL,
+  `ip` varchar(16) NOT NULL,
+  `description` varchar(32) NOT NULL,
+  `admin` varchar(24) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
