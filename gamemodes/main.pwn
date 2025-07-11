@@ -60,29 +60,29 @@ main()
 }
 
 // ------------------------------------------
-#define SERVER_NAME 	"RADMIR" 		// название мода
-#define SERVER_SITE 	"radmir-rp.ru" 	// сайт сервера
-#define SERVER_MAP_NAME "Russia"		// название карты
+#define SERVER_NAME 				"RADMIR" 		// название мода
+#define SERVER_SITE 				"radmir-rp.ru" 	// сайт сервера
+#define SERVER_MAP_NAME 			"Russia"		// название карты
 
-#define GAME_MODE_TEXT 	""SERVER_NAME" RP Russian" // Название мода в клиенте
+#define GAME_MODE_TEXT 				""SERVER_NAME" RP Russian" // Название мода в клиенте
 
-#define AUTH_CAMERA_POS 	236.4, 810.1, 20.0 // позиции камеры при авторизации/регистрации
-#define AUTH_CAMERA_LOOK 	-400.0, 400.0, 5.0 // позиции камеры при авторизации/регистрации
+#define AUTH_CAMERA_POS 			236.4, 810.1, 20.0 // позиции камеры при авторизации/регистрации
+#define AUTH_CAMERA_LOOK 			-400.0, 400.0, 5.0 // позиции камеры при авторизации/регистрации
 
 #define LAN_MODE
 #if defined LAN_MODE
 	
-	#define MYSQL_HOST 	"127.0.0.1" // ип
-	#define MYSQL_USER 	"a_orp" 	// пользователь
-	#define MYSQL_PASS 	"a_orp" 	// пароль
-	#define MYSQL_BASE 	"a_orp" 	// название бд
+	#define MYSQL_HOST				"127.0.0.1"
+	#define MYSQL_USER				"root"
+	#define MYSQL_BASE				"radmir_schema"
+	#define MYSQL_PASS				"123123"
 
 #else 
 
-	#define MYSQL_HOST 	"127.0.0.1" 		// ип
-	#define MYSQL_USER 	"Hf138g22" 			// пользователь
-	#define MYSQL_PASS 	"bfz" 				// пароль
-	#define MYSQL_BASE 	"bfz" 				// название бд
+	#define MYSQL_HOST				""
+	#define MYSQL_USER				""
+	#define MYSQL_BASE				""
+	#define MYSQL_PASS				""
 	
 #endif
 
