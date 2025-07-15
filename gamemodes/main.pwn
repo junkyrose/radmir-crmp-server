@@ -1,4 +1,6 @@
 /*
+	! Доработать структуру ядра (база данных)
+
 	- Система !бизнесов(Доделать все типы бизнесов), домов
 	- Работы (дальнобойщик)
 	- Больница
@@ -30,25 +32,32 @@ L1:
 
 #include <a_samp>
 
-#include "../include/a_mysql.inc"
-#include "../include/sscanf2.inc"
-#include "../include/streamer.inc"
-#include "../include/dc_cmd.inc"
-#include "../include/foreach.inc"
-#include "../include/crashdetect.inc"
-#include "../include/timerfix.inc"
-#include "../include/profiler.inc"
-#include "../include/zones.inc"
-#include "../include/mxdate.inc"
-#include "../include/yom_buttons.inc"
+#include "library\a_mysql.inc"
+#include "library\sscanf2.inc"
+#include "library\streamer.inc"
+#include "library\dc_cmd.inc"
+#include "library\foreach.inc"
+#include "library\crashdetect.inc"
+#include "library\timerfix.inc"
+#include "library\profiler.inc"
+#include "library\zones.inc"
+#include "library\mxdate.inc"
+#include "library\yom_buttons.inc"
 
-#include "../include/map.inc" // карта
-#include "../include/gang_zones.inc" // зоны
+// config.pwn — defines, macros, enums, vars
+// object.pwn — Create / Remove Object functions
+// server.pwn — server commands, utilities
+// database.pwn — MySQL functions
 
-#include "../include/system/cp.pwn"
-#include "../include/system/cp_race.pwn"
-#include "../include/system/pickup.pwn"
-#include "../include/system/vehicle.pwn"
+#include "modules\core\config.pwn"
+#include "modules\core\object.pwn"
+#include "modules\core\server.pwn"
+#include "modules\core\database.pwn"
+
+#include "modules\system\cp.pwn"
+#include "modules\system\cp_race.pwn"
+#include "modules\system\pickup.pwn"
+#include "modules\system\vehicle.pwn"
 
 // ------------------------------------------
 main()
@@ -60,31 +69,9 @@ main()
 }
 
 // ------------------------------------------
-#define SERVER_NAME 				"RADMIR" 		// название мода
-#define SERVER_SITE 				"radmir-rp.ru" 	// сайт сервера
-#define SERVER_MAP_NAME 			"Russia"		// название карты
-
-#define GAME_MODE_TEXT 				""SERVER_NAME" RP Russian" // Название мода в клиенте
 
 #define AUTH_CAMERA_POS 			236.4, 810.1, 20.0 // позиции камеры при авторизации/регистрации
 #define AUTH_CAMERA_LOOK 			-400.0, 400.0, 5.0 // позиции камеры при авторизации/регистрации
-
-#define LAN_MODE
-#if defined LAN_MODE
-	
-	#define MYSQL_HOST				"127.0.0.1"
-	#define MYSQL_USER				"root"
-	#define MYSQL_BASE				"radmir_schema"
-	#define MYSQL_PASS				"123123"
-
-#else 
-
-	#define MYSQL_HOST				""
-	#define MYSQL_USER				""
-	#define MYSQL_BASE				""
-	#define MYSQL_PASS				""
-	
-#endif
 
 #define MAX_FLOOD_RATE	(3000)	
 #define FLOOD_RATE_INC	(1000)
@@ -95,7 +82,7 @@ main()
 #define FUEL_ST_CREATED_PICKUP		// создавать ли пикапы для азс
 
 #define ENTER_PASSWORD_ATTEMPS 	(3)  // кол-во попыток на ввод пароля
-#define REFER_BONUS_MONEY	(50_000) // бонус выдача денег реферу
+#define REFER_BONUS_MONEY		(50_000) // бонус выдача денег реферу
 
 #define MAX_AFK_TIME 			(30) // максимальное время афк (в минутах)
 #define MAX_BANK_ACCOUNTS 		(8)	 // максимальное кол счетов в банке
@@ -118,26 +105,6 @@ main()
 #define BIZ_HEALTH_SERVICE_PRICE (150)	// стоимость использование аптечки в бизнесе
 
 #define MAP_ICON_STREAM_DISTANCE (200.0) // прорисовка иконок на карте (радиус)
-
-// ------------------------------------------
-#define public:%0(%1) \
-			forward %0(%1); \
-				public %0(%1)
-				
-#define Kick:(%0) FixKick(%0)
-//#define Dialog ShowPlayerDialog
-
-#define HOLDING(%0) \
-	((newkeys & (%0)) == (%0))
-
-#define PRESSED(%0) \
-	(((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
-	
-#define RELEASED(%0) \
-	(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))
-	
-#define PRESSING(%0,%1) \
-	(%0 & (%1))
 
 // ------------------------------------------
 #define VEHICLE_COORD_TYPE_BOOT		(1)
@@ -1584,8 +1551,6 @@ enum // шаги авторизации
 	//LOGIN_STATE_GOOGLE_CODE,	// ввод кода от гугла
 	LOGIN_STATE_LOAD_ACC	 	// Загрузка аккаунта
 };
-// ------------------------------------------
-new mysql; // ид соединения
 
 // ------------------------------------------
 new Text: server_logo_TD;	// лого сервера
@@ -1719,7 +1684,8 @@ new
 	ACCOUNT_STATE_NONE, // статус аккаунта (авторизаци/регистрация)
 	0 					// шаг (регистрации/авторизации)
 };
-new mysql_race[MAX_PLAYERS];
+
+
 new g_speed_line_update[MAX_PLAYERS] = {-1, ...};
 
 new Float: g_taxi_mileage[MAX_PLAYERS] = {0.0, ...};
@@ -3464,46 +3430,9 @@ new const
 
 public OnGameModeInit()
 {
-	new hour;
-	gettime(hour);
-	
-	SetWorldTime(hour);
-	AddPlayerClass(0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0);
+	new count = GetTickCount();
 
-	SendRconCommand("hostname "SERVER_NAME" RolePlay");
-	SendRconCommand("weburl www."SERVER_SITE"");
-	SendRconCommand("mapname "SERVER_MAP_NAME"");
-	
-	ShowNameTags(true);
-	DisableInteriorEnterExits();
-	EnableStuntBonusForAll(false);
-	ManualVehicleEngineAndLights();
-	ShowPlayerMarkers(PLAYER_MARKERS_MODE_STREAMED);
-	SetNameTagDrawDistance(30.0);
-	
-	// streamer
-	
-	//Streamer_SetMaxItems(STREAMER_TYPE_MAP_ICON, 98);
-	Streamer_SetVisibleItems(STREAMER_TYPE_MAP_ICON, 98);
-	Streamer_SetVisibleItems(STREAMER_TYPE_OBJECT, 650); // Default: 500
-	
-	Streamer_SetTypePriority
-	(
-		{
-			STREAMER_TYPE_OBJECT, 
-			STREAMER_TYPE_CP,
-			STREAMER_TYPE_AREA,
-			STREAMER_TYPE_3D_TEXT_LABEL,
-			STREAMER_TYPE_MAP_ICON,
-			STREAMER_TYPE_RACE_CP,
-			STREAMER_TYPE_PICKUP
-		}
-	);
-	Streamer_ToggleErrorCallback(true);
-	Streamer_SetTickRate(40); // Default: 50
-	
-	//LimitPlayerMarkerRadius(200.0);
-	//LimitGlobalChatRadius(30.0);
+	Server:Init();
 	
 	CreateDynamic3DTextLabel("Прием на работу", 0xFFFF00FF, 489.7003, 5.9846, 1052.0 + 1.8, 10.0);
 	join_to_job_CP = CreateDynamicCP(489.7003, 5.9846, 1052.0, 1.5, _, _, _, 15.0);
@@ -3534,19 +3463,9 @@ public OnGameModeInit()
 	SetRandomWeather();
 	#endif
 	
-	#if defined _MAP_INCLUDED
-	CreateMAP();
-	#endif
+	Object:Create();
 	
-	#if defined _GANG_ZONES_INC
-	CreateGangZonesCR();
-	#endif
-	
-	mysql_log(LOG_ERROR | LOG_WARNING, LOG_TYPE_HTML);
-	mysql = mysql_connect(MYSQL_HOST, MYSQL_USER, MYSQL_BASE, MYSQL_PASS, 3306, true, 2);
-	
-	if(mysql_errno() != 0)
-		return print("Не удалось подключится к базе данных!");
+	Database:Init();
 	
 	UpdateCharity();
 	RepositoriesLoad();
@@ -3566,9 +3485,8 @@ public OnGameModeInit()
 	LoadTrunks();
 	
 	SetTimer("ClearBanList", 15_000, false);
-	SetTimer_("OnSecondTimer", 1000, 0, -1);
-	
-	SetGameModeText(GAME_MODE_TEXT);
+
+	printf("GameMode Initialized for %d (ms)", GetTickCount() - count);
 	
 	return 1;
 }
@@ -3577,7 +3495,8 @@ public OnGameModeExit()
 {
 	SaveRepository();
 
-	mysql_close(mysql);
+	Database:Shutdown();
+
 	return 1;
 }
 
@@ -3727,7 +3646,7 @@ public OnPlayerSpawn(playerid)
 			ShowPlayerSelectPanel(playerid, SELECT_PANEL_TYPE_REG_SKIN);
 			ShowPlayerSelectPanelPrice(playerid, -1);
 			
-			PlayerTextDrawSetString(playerid, price_select_TD[playerid][1], "O-RP.RU");
+			PlayerTextDrawSetString(playerid, price_select_TD[playerid][1], "RM-RP.RU");
 			//ShowMenuForPlayer(reg_select_skin_menu, playerid);
 		}
 	}
@@ -14061,15 +13980,8 @@ public: CheckPlayerAccount(playerid, race)
 		}
 		cache_delete(result);
 
-		#if defined _MAP_INCLUDED
-		RemoveBuildings(playerid);
-		#endif
+		Object:Remove(playerid);
 	}
-}
-
-public: FixedKick(playerid)
-{
-	Kick(playerid);
 }
 
 public: LoadPlayerData(playerid)
@@ -18936,14 +18848,19 @@ stock SetPlayerPosEx(playerid, Float: x, Float: y, Float: z, Float: angle, inter
 	return 1;
 }
 
-stock FixKick(playerid, message[] = "Введите /q (/quit) чтобы выйти", time_ms = 500)
+stock PlayerKick(playerid, message[] = "Введите /q (/quit) чтобы выйти", time_ms = 500)
 {
 	if(strlen(message) > 1)
 		SendClientMessage(playerid, 0xFF6600FF, message);
 	
-	SetTimerEx("FixedKick", time_ms, false, "i", playerid);
+	SetTimerEx("OnPlayerDelayKick", time_ms, false, "i", playerid);
 	
 	return 1;
+}
+
+public: OnPlayerDelayKick(playerid)
+{
+	return Kick(playerid);
 }
 
 stock ClearPlayerInfo(playerid)
@@ -21172,11 +21089,6 @@ stock Dialog(playerid, dialogid, style, caption[], info[], button1[], button2[])
 	SetPlayerData(playerid, P_LAST_DIALOG, dialogid);
 	
 	return ShowPlayerDialog(playerid, dialogid, style, caption, info, button1, button2);
-}
-
-stock abs(value)
-{
-	return value = -value;
 }
 
 stock IsNumeric(dest[], pos=0)
